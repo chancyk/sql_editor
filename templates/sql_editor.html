@@ -1,0 +1,76 @@
+<!doctype html>
+<HTML>
+
+<TITLE>SQL Editor</TITLE>
+<META charset="utf-8"/>
+
+
+<HEAD>
+
+<link rel="stylesheet" href="../static/codemirror/lib/codemirror.css" />
+<link rel="stylesheet" href="../static/codemirror/addon/hint/show-hint.css">
+
+<script src="../static/codemirror/lib/codemirror.js"></script>
+<script src="../static/codemirror/addon/hint/show-hint.js"></script>
+<script src="../static/codemirror/addon/hint/sql-hint.js"></script>
+<script src="../static/codemirror/mode/sql/sql.js"></script>
+
+<style>
+.CodeMirror {
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
+}
+</style>
+    
+</HEAD>
+
+
+<BODY>
+
+<form>
+    <textarea id="code" name="code">
+-- <Ctrl> + <Space> to autocomplete
+-- 
+-- The statically configured tables and columns in sql_editor.html are:
+--
+-- "opportunities":      [ "id", "name" ],
+-- "opportunities_cstm": [ "opp_status_c", "opp_funded_date_c" ]
+--
+-- Try out the autocomplete by typing `oc.opp` and then ctrl+space.
+
+SELECT o.id, o.name, oc.status_c
+FROM opportunities o
+
+INNER JOIN opportunities_cstm oc
+   ON o.id = oc.id_c
+
+WHERE o.deleted = 0;
+    </textarea>
+</form>
+
+<script>
+window.onload = function() {
+
+  window.editor = CodeMirror.fromTextArea(document.getElementById('code'), {
+    mode: 'text/x-mysql',
+    indentWithTabs: true,
+    smartIndent: true,
+    lineNumbers: true,
+    matchBrackets : true,
+    autofocus: true,
+    extraKeys: {"Ctrl-Space": "autocomplete"}
+  });
+  
+  CodeMirror.commands.autocomplete = function(cm) {
+    CodeMirror.showHint(cm, CodeMirror.hint.sql, {
+        tables: {
+            "opportunities": [ "id", "name" ],
+            "opportunities_cstm": [ "opp_status_c", "opp_funded_date_c" ]
+        }
+    });
+  }
+};
+</script>
+
+</BODY>
+</HTML>
