@@ -1,24 +1,52 @@
 <!doctype html>
 <HTML>
 
-<TITLE>SQL Editor</TITLE>
+<TITLE>SugarCRM SQL Editor</TITLE>
 <META charset="utf-8"/>
 
 
 <HEAD>
 
-<link rel="stylesheet" href="../static/codemirror/lib/codemirror.css" />
-<link rel="stylesheet" href="../static/codemirror/addon/hint/show-hint.css">
+<link rel="stylesheet" href="../static/codemirror/lib/codemirror.css"/>
+<link rel="stylesheet" href="../static/codemirror/addon/hint/show-hint.css"/>
+<link rel="stylesheet" href="../static/datatables/css/jquery.dataTables.min.css"/>
+<link rel="stylesheet" href="../static/datatables/extensions/buttons/buttons.dataTables.min.css"/>
 
+<script src="../static/js/jszip.min.js"></script>
 <script src="../static/codemirror/lib/codemirror.js"></script>
 <script src="../static/codemirror/addon/hint/show-hint.js"></script>
 <script src="../static/codemirror/addon/hint/sql-hint.js"></script>
 <script src="../static/codemirror/mode/sql/sql.js"></script>
 
+<script src="../static/js/jquery-2.2.0.min.js"></script>
+<script src="../static/datatables/js/jquery.dataTables.min.js"></script>
+<script src="../static/datatables/extensions/buttons/dataTables.buttons.min.js"></script>
+<script src="../static/datatables/extensions/buttons/buttons.html5.min.js"></script>
+<script src="../static/datatables/extensions/buttons/buttons.flash.min.js"></script>
+
+
 <style>
 .CodeMirror {
-    border-top: 1px solid black;
-    border-bottom: 1px solid black;
+    width: 800px;
+    border: 1px solid black;
+}
+
+#button-run-sql {
+    margin-top: 5px;
+}
+
+#data-container {
+    margin-top: 20px;
+}
+.dataTable {
+    font-size: 14px;
+}
+table.dataTable tbody td {
+    padding: 5px;
+}
+#data-table_length {
+    clear: both;
+    margin-top: 10px;
 }
 </style>
     
@@ -28,27 +56,88 @@
 <BODY>
 
 <form>
-    <textarea id="code" name="code">
--- <Ctrl> + <Space> to autocomplete
--- 
--- The statically configured tables and columns in sql_editor.html are:
---
--- "opportunities":      [ "id", "name" ],
--- "opportunities_cstm": [ "opp_status_c", "opp_funded_date_c" ]
---
--- Try out the autocomplete by typing `oc.opp` and then ctrl+space.
+<textarea id="code" name="code">
+-- <Ctrl> + <Space> to autocomplete tables, column names, and functions.
 
-SELECT o.id, o.name, oc.status_c
-FROM opportunities o
-
-INNER JOIN opportunities_cstm oc
-   ON o.id = oc.id_c
-
-WHERE o.deleted = 0;
-    </textarea>
+SELECT h.world, h.neighbor
+FROM hello h;
+</textarea>
 </form>
 
+<button id="button-run-sql" type="button" onclick="run_sql()">Run SQL</button>
+
+<div id="data-container"></div>
+<div id="data-error"></div>
+
+
 <script>
+var AUTOCOMPLETE_TABLES = {
+    'hello': ['world', 'neighbor', 'there'],
+    'reply': ['rumble', 'hellodley', 'hi_there']
+}
+
+function fake_post(url, data, callback){
+    // This structure is not specific to DataTable and is just the structure my server is returning.
+    var response = {
+        'type': 'table',
+        'header': ['id', 'name'],
+        'columns': [{'title': 'ID'}, {'title': 'Name'}],
+        'data': [
+            ['1', 'Homer Simpson'],
+            ['2', 'Bart Simpson'],
+            ['3', 'Lisa Simpson'],
+            ['4', 'Ned Flanders'],
+            ['5', 'Planet Earth']
+        ]
+    }
+
+    callback(response);
+}
+
+
+function run_sql(){
+    $('#data-error').text();
+    $("#data-container").empty();
+    var sql = window.editor.getValue();
+    
+    // fake_post can be replaced with $.post from jQuery and directed at a route on your server.
+    fake_post("editor/run-sql", {'data': sql}, function(result){
+        if (result['type'] == 'table') {
+            var table_headers;
+            $.each(result['header'], function(i, val){
+                table_headers += "<th>" + val + "</th>";
+            });
+            
+            $("#data-container").append('<table id="data-table" class="display" cellspacing="0" width="100%"><thead><tr>' + table_headers + '</tr></thead></table>');
+            
+            $('#data-table').DataTable({
+                dom: 'Blfrtip',
+                buttons: [ 'copy', 'csv', 'excel',
+                    {
+                        extend: 'copy',
+                        text: 'Copy current page',
+                        exportOptions: {
+                            modifier: {
+                                page: 'current'
+                            }
+                        }
+                    }
+                ],
+                data: result['data'],
+                columns: result['columns']
+            });
+        }
+        else {
+            $('#data-container').html('<span>' + result['data'] + '</span>');
+        }
+    });
+    /* Handle the error if this were a real jQuery AJAX post.
+    .fail(function(result) {
+        $('#data-error').html('<span>' + result['responseText'] + '</span>');
+    });
+    */
+}
+
 window.onload = function() {
 
   window.editor = CodeMirror.fromTextArea(document.getElementById('code'), {
@@ -63,14 +152,13 @@ window.onload = function() {
   
   CodeMirror.commands.autocomplete = function(cm) {
     CodeMirror.showHint(cm, CodeMirror.hint.sql, {
-        tables: {
-            "opportunities": [ "id", "name" ],
-            "opportunities_cstm": [ "opp_status_c", "opp_funded_date_c" ]
-        }
+        tables: AUTOCOMPLETE_TABLES
     });
   }
 };
 </script>
+
+
 
 </BODY>
 </HTML>
