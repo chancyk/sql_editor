@@ -58,9 +58,20 @@ table.dataTable tbody td {
 <form>
 <textarea id="code" name="code">
 -- <Ctrl> + <Space> to autocomplete tables, column names, and functions.
+--
+-- Try using the autocomplete by placing the cursor immediately after the `h.ne` below,
+-- and then hitting <Ctrl>+<Space>.
 
-SELECT h.world, h.neighbor
-FROM hello h;
+-- Clicking the Run SQL button will populate the DataTables table with some static data.
+
+
+SELECT h.w, h.ne, r.r, r.
+FROM hello h
+
+INNER JOIN reply r
+   ON h.id = r.hello_id
+   
+INNER JOIN he
 </textarea>
 </form>
 
