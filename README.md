@@ -8,3 +8,10 @@ There are tags with a CodeMirror only editor version, and a CodeMirror and DataT
 
 
 The DataTable version is setup with a mock `fake_post` function that can be replaced with the jQuery's `$.post`, and pointed at a server-side route, which upon response will dynamically create the DataTable.
+
+The SQL dialect can be change by altering the CodeMirror mode option to be one of the following MIME types, as specified by the `sql` plugin:
+
+```
+text/x-sql, text/x-mysql, text/x-mariadb, text/x-cassandra, text/x-plsql,
+text/x-mssql, text/x-hive, text/x-pgsql, text/x-gql
+```
